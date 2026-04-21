@@ -1,6 +1,7 @@
 import React, {useEffect, useState, useRef} from 'react';
 
 // TaskTimer component for tracking task duration
+// Supports both countdown and count-up modes
 interface TaskTimerProps {
   startTimeStamp?: number; // in milliseconds
   countdown?: boolean;
