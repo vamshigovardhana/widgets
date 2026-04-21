@@ -122,33 +122,33 @@ jobs:
           echo "=========================================="
 
       - name: Add NPM token to .yarnrc.yml file
-        if: steps.check-changes.outputs.has_changes == 'true'
+        if: steps.check-changes.outputs.has_changes == 'true' && env.token != ''
         run: |
           echo "npmAuthToken: ${{ env.token }}" >> ~/.yarnrc.yml
 
-      - name: Sync and Increment Package Versions
+      - name: Sync and Increment Package Versions (Mock for Testing)
         id: increment
         if: steps.check-changes.outputs.has_changes == 'true'
         run: |
-          yarn package-tools sync --tag ${GITHUB_REF##*/}
-          OUTPUT=$(yarn package-tools increment --packages ${{ needs.analyze-changes.outputs.node-recursive }} --tag ${GITHUB_REF##*/})
+          # Mock version output for testing
+          OUTPUT="@webex/cc-components => 1.0.0-next.999"
           echo "$OUTPUT"
           echo "package_versions<<EOF" >> $GITHUB_OUTPUT
           echo "$OUTPUT" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
-      - name: Build Changed Packages
-        if: steps.check-changes.outputs.has_changes == 'true'
+      - name: Build Changed Packages (Skipped for Testing)
+        if: false
         run: yarn run build:prod
 
-      - name: Cache Built Distributables
-        if: steps.check-changes.outputs.has_changes == 'true'
+      - name: Cache Built Distributables (Skipped for Testing)
+        if: false
         uses: actions/cache/save@v4
         with:
           path: "**/dist"
           key: dist-${{ env.rid }}
 
-      - name: Deploy Packages
-        if: steps.check-changes.outputs.has_changes == 'true'
+      - name: Deploy Packages (Skipped for Testing)
+        if: false
         run: yarn workspaces foreach -W --from '${{ needs.analyze-changes.outputs.yarn-recursive }}' --verbose run deploy:npm --access public --tag ${GITHUB_REF##*/}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -157,6 +157,7 @@ jobs:
     name: Publish - Documentation
     needs: [publish-npm,analyze-changes]
     runs-on: ubuntu-latest
+    if: false  # Skip for testing
 
     steps:
       - name: Documentation Deploy Steps
