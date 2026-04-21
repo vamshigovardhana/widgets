@@ -564,35 +564,34 @@ jobs:
             PR_LINK=""
           fi
 
-          PR_TITLE=$(printf '%s' "${COMMIT_MESSAGE}" | head -n 1)
+          PR_TITLE=$(echo "${COMMIT_MESSAGE}" | head -n 1)
 
-          MESSAGE=""
+          # Build message parts as an array
+          MESSAGE_PARTS=()
+
           if [ -n "${VERSION}" ]; then
-            MESSAGE=$(printf '%s' "**Version:** ${VERSION}")
-          fi
-          if [ -n "${PR_LINK}" ]; then
-            PR_BLOCK=$(printf '%s' "**PR:** [${PR_TITLE}](${PR_LINK})")
-            if [ -n "${MESSAGE}" ]; then
-              MESSAGE=$(printf '%s\n\n%s' "${MESSAGE}" "${PR_BLOCK}")
-            else
-              MESSAGE="${PR_BLOCK}"
-            fi
-          fi
-          if [ -n "${CHANGELOG_URL}" ]; then
-            CL_BLOCK=$(printf '%s' "**Changelog:** ${CHANGELOG_URL}")
-            if [ -n "${MESSAGE}" ]; then
-              MESSAGE=$(printf '%s\n\n%s' "${MESSAGE}" "${CL_BLOCK}")
-            else
-              MESSAGE="${CL_BLOCK}"
-            fi
+            MESSAGE_PARTS+=("**Version:** ${VERSION}")
           fi
 
-          if [ -z "${MESSAGE}" ]; then
+          if [ -n "${PR_LINK}" ]; then
+            MESSAGE_PARTS+=("**PR:** [${PR_TITLE}](${PR_LINK})")
+          fi
+
+          if [ -n "${CHANGELOG_URL}" ]; then
+            MESSAGE_PARTS+=("**Changelog:** ${CHANGELOG_URL}")
+          fi
+
+          if [ ${#MESSAGE_PARTS[@]} -eq 0 ]; then
             echo "No version or PR info available. Skipping notification."
             exit 0
           fi
 
+          # Join parts with double newlines
+          MESSAGE=$(IFS=$'\n\n'; echo "${MESSAGE_PARTS[*]}")
+
           echo "Sending message to Webex Space..."
+          echo "Message content:"
+          echo "${MESSAGE}"
 
           BODY=$(jq -n --arg room "${WEBEX_ROOM_ID}" --arg md "${MESSAGE}" '{roomId: $room, markdown: $md}')
           curl -sSf \
