@@ -363,6 +363,7 @@ jobs:
 
     outputs:
       pr_number: ${{ steps.get-pr.outputs.pr_number }}
+      primary_package: ${{ steps.post-comment.outputs.primary_package }}
       primary_version: ${{ steps.post-comment.outputs.primary_version }}
       changelog_url: ${{ steps.post-comment.outputs.changelog_url }}
 
@@ -419,11 +420,12 @@ jobs:
             const aggregators = ['@webex/cc-widgets', '@webex/widgets'];
 
             let commentBody;
+            let primaryPackage = '';
             let primaryVersion = '';
             let changelogUrl = '';
 
             if (hasPackages) {
-              const primaryPackage = aggregators.find(p => packageVersions[p])
+              primaryPackage = aggregators.find(p => packageVersions[p])
                 || packageEntries[0][0];
               primaryVersion = packageVersions[primaryPackage];
               const stableVersion = primaryVersion
@@ -538,6 +540,7 @@ jobs:
             }
 
             // Set outputs for downstream jobs
+            core.setOutput('primary_package', primaryPackage);
             core.setOutput('primary_version', primaryVersion);
             core.setOutput('changelog_url', changelogUrl);
 
@@ -554,6 +557,7 @@ jobs:
           WEBEX_ROOM_ID: ${{ secrets.WEBEX_ROOM_ID }}
           COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
         run: |
+          PACKAGE="${{ needs.comment-on-pr.outputs.primary_package }}"
           VERSION="${{ needs.comment-on-pr.outputs.primary_version }}"
           PR_NUMBER="${{ needs.comment-on-pr.outputs.pr_number }}"
           CHANGELOG_URL="${{ needs.comment-on-pr.outputs.changelog_url }}"
@@ -569,8 +573,8 @@ jobs:
           # Build message parts as an array
           MESSAGE_PARTS=()
 
-          if [ -n "${VERSION}" ]; then
-            MESSAGE_PARTS+=("**Version:** ${VERSION}")
+          if [ -n "${VERSION}" ] && [ -n "${PACKAGE}" ]; then
+            MESSAGE_PARTS+=("**Version:** ${PACKAGE}@${VERSION}")
           fi
 
           if [ -n "${PR_LINK}" ]; then
