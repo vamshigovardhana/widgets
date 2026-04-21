@@ -3,6 +3,7 @@ import React, {useEffect, useState, useRef} from 'react';
 // TaskTimer component for tracking task duration
 // Supports both countdown and count-up modes
 // Uses Web Worker for accurate timing
+// Handles RONA (Redirection on No Answer) timeout scenarios
 interface TaskTimerProps {
   startTimeStamp?: number; // in milliseconds
   countdown?: boolean;
